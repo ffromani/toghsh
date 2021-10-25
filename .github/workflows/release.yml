@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Setup golang
+      uses: actions/setup-go@v2
+      id: go
+      with:
+        go-version: 1.16
+
+    - name: Verify modules
+      run: go mod verify
+
+    - name: Set release version env var
+      run: |
+        echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+    - name: Build tool
+      run: |
+        make
+
+    - name: Fix build artifacts
+      run: |
+        mv _out/toghsh toghsh-${{ env.RELEASE_VERSION }}-linux-amd64
+        make clean outdir
+        mv toghsh-${{ env.RELEASE_VERSION}}-linux-amd64 _out/
+
+    - name: Compute signature
+      run: |
+        pushd _out && sha256sum * >> ../SHA256SUMS && mv ../SHA256SUMS . && popd
+
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "_out/SHA256SUMS,_out/toghsh-v*-linux-amd64"
+        token: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
