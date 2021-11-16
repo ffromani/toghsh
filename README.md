@@ -19,6 +19,8 @@ comprehensive solution.
 1. fetch the `toghsh` source tree
 2. run `make`
 3. copy the binary (`_out/toghsh` by default) in your `$PATH`
+4. find the available jobs: `togsh -L .github/workflows/$YOUR_YAML`
+5. run your job locally: `togsh -J $JOB .github/workflows/$YOUR_YAML | bash -xe`
 
 ## Example
 
